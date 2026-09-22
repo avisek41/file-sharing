@@ -60,28 +60,40 @@ const ReceivedFileScreen: FC = () => {
     switch (mimeType) {
       case 'mp3':
         return (
-          <Icon
-            name="musical-notes"
-            size={16}
-            color="blue"
-            iconFamily="Ionicons"
-          />
+          <View style={connectionStyles.fileIconWrapper}>
+            <Icon
+              name="musical-notes"
+              size={18}
+              color={Colors.primary}
+              iconFamily="Ionicons"
+            />
+          </View>
         );
       case 'mp4':
         return (
-          <Icon name="videocam" size={16} color="green" iconFamily="Ionicons" />
+          <View style={connectionStyles.fileIconWrapper}>
+            <Icon name="videocam" size={18} color="#10B981" iconFamily="Ionicons" />
+          </View>
         );
       case 'jpg':
+      case 'png':
+      case 'jpeg':
         return (
-          <Icon name="image" size={16} color="orange" iconFamily="Ionicons" />
+          <View style={connectionStyles.fileIconWrapper}>
+            <Icon name="image" size={18} color="#F59E0B" iconFamily="Ionicons" />
+          </View>
         );
       case 'pdf':
         return (
-          <Icon name="document" size={16} color="red" iconFamily="Ionicons" />
+          <View style={connectionStyles.fileIconWrapper}>
+            <Icon name="document-text" size={18} color="#EF4444" iconFamily="Ionicons" />
+          </View>
         );
       default:
         return (
-          <Icon name="folder" size={16} color="gray" iconFamily="Ionicons" />
+          <View style={connectionStyles.fileIconWrapper}>
+            <Icon name="folder" size={18} color={Colors.primary} iconFamily="Ionicons" />
+          </View>
         );
     }
   };
@@ -92,10 +104,10 @@ const ReceivedFileScreen: FC = () => {
         <View style={connectionStyles.fileInfoContainer}>
           {renderThumbnail(item?.mimeType)}
           <View style={connectionStyles.fileDetails}>
-            <CustomText numberOfLines={1} fontFamily="Okra-Bold" fontSize={10}>
+            <CustomText numberOfLines={1} fontFamily="Okra-Bold" fontSize={11} color={Colors.text}>
               {item.name}
             </CustomText>
-            <CustomText numberOfLines={1} fontFamily="Okra-Medium" fontSize={8}>
+            <CustomText numberOfLines={1} fontFamily="Okra-Medium" fontSize={10} color={Colors.text_secondary} style={{marginTop: 2}}>
               {item.mimeType} • {formatFileSize(item.size)}
             </CustomText>
           </View>
@@ -118,12 +130,13 @@ const ReceivedFileScreen: FC = () => {
                 .catch(err => console.error('Error opening file:', err));
             }
           }}
-          style={connectionStyles.openButton}>
+          style={connectionStyles.openButton}
+          activeOpacity={0.8}>
           <CustomText
             numberOfLines={1}
             color="#fff"
             fontFamily="Okra-Bold"
-            fontSize={9}>
+            fontSize={10}>
             Open
           </CustomText>
         </TouchableOpacity>
@@ -133,7 +146,7 @@ const ReceivedFileScreen: FC = () => {
 
   return (
     <LinearGradient
-      colors={['#FFFFFF', '#CDDAEE', '#8DBAFF']}
+      colors={['#FFFFFF', '#F0F7FF', '#BAE6FD', '#38BDF8']}
       style={sendStyles.container}
       start={{x: 0, y: 1}}
       end={{x: 0, y: 0}}>
@@ -142,14 +155,14 @@ const ReceivedFileScreen: FC = () => {
       <View style={sendStyles.mainContainer}>
         <CustomText
           fontFamily="Okra-Bold"
-          fontSize={15}
-          color="#fff"
-          style={{textAlign: 'center', margin: 10}}>
+          fontSize={16}
+          color={Colors.text}
+          style={{textAlign: 'center', marginVertical: 14}}>
           All Received Files
         </CustomText>
 
         {isLoading ? (
-          <ActivityIndicator size="small" color={Colors.primary} />
+          <ActivityIndicator size="small" color={Colors.primary} style={{marginTop: 40}} />
         ) : (
           <>
             {receivedFiles?.length > 0 ? (
@@ -158,14 +171,17 @@ const ReceivedFileScreen: FC = () => {
                 data={receivedFiles}
                 keyExtractor={item => item.id}
                 renderItem={renderItem}
-                contentContainerStyle={connectionStyles.fileList}
+                contentContainerStyle={[connectionStyles.fileList, {paddingHorizontal: 16}]}
               />
             ) : (
               <View style={connectionStyles.noDataContainer}>
+                <Icon name="folder-open-outline" iconFamily="Ionicons" size={48} color={Colors.text_light} />
                 <CustomText
                   numberOfLines={1}
                   fontFamily="Okra-Medium"
-                  fontSize={11}>
+                  fontSize={13}
+                  color={Colors.text_secondary}
+                  style={{marginTop: 10}}>
                   No files received yet.
                 </CustomText>
               </View>
@@ -177,8 +193,8 @@ const ReceivedFileScreen: FC = () => {
           <Icon
             name="arrow-back"
             iconFamily="Ionicons"
-            size={16}
-            color="#000"
+            size={20}
+            color={Colors.text}
           />
         </TouchableOpacity>
       </View>

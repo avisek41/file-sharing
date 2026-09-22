@@ -15,14 +15,16 @@ const HomeHeader = () => {
     <View style={homeHeaderStyles.mainContainer}>
       <SafeAreaView />
       <View style={[commonStyles.flexRowBetween, homeHeaderStyles.container]}>
-        <TouchableOpacity>
+        <TouchableOpacity style={homeHeaderStyles.headerButton}>
           <Icon iconFamily="Ionicons" name="menu" size={22} color="#fff" />
         </TouchableOpacity>
         <Image
           source={require('../../assets/images/logo_t.png')}
           style={homeHeaderStyles.logo}
         />
-        <TouchableOpacity onPress={() => setVisible(true)}>
+        <TouchableOpacity
+          style={homeHeaderStyles.profileButton}
+          onPress={() => setVisible(true)}>
           <Image
             source={require('../../assets/images/profile.jpg')}
             style={homeHeaderStyles.profile}
@@ -36,12 +38,12 @@ const HomeHeader = () => {
         style={homeHeaderStyles.curve}>
         <Defs>
           <LinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0%" stopColor="#007AFF" stopOpacity="1" />
-            <Stop offset="100%" stopColor="#80BFFF" stopOpacity="1" />
+            <Stop offset="0%" stopColor="#0052CC" stopOpacity="1" />
+            <Stop offset="100%" stopColor="#00A3FF" stopOpacity="1" />
           </LinearGradient>
         </Defs>
 
-        <Path fill="#80BFFF" d={svgPath} />
+        <Path fill="#00A3FF" d={svgPath} />
         <Path fill="url(#grad)" d={svgPath} />
       </Svg>
 

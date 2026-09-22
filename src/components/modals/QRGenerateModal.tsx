@@ -10,7 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
 import QRCode from 'react-native-qrcode-svg';
-import {multiColor} from '../../utils/Constants';
+import {Colors, multiColor} from '../../utils/Constants';
 import CustomText from '../global/CustomText';
 import {TouchableOpacity} from 'react-native';
 import Icon from '../global/Icon';
@@ -28,7 +28,7 @@ const QRGenerateModal: FC<ModalProps> = ({visible, onClose}) => {
   const {isConnected, startServer, server} = useTCP();
 
   const [loading, setLoading] = useState(true);
-  const [qrValue, setQRValue] = useState('Ritik');
+  const [qrValue, setQRValue] = useState('Avisek');
   const shimmerTranslateX = useSharedValue(-300);
 
   const shimmerStyle = useAnimatedStyle(() => ({
@@ -119,14 +119,14 @@ const QRGenerateModal: FC<ModalProps> = ({visible, onClose}) => {
 
         <ActivityIndicator
           size="small"
-          color="#000"
+          color={Colors.primary}
           style={{alignSelf: 'center'}}
         />
 
         <TouchableOpacity
           onPress={() => onClose()}
           style={modalStyles.closeButton}>
-          <Icon name="close" iconFamily="Ionicons" size={24} color="#000" />
+          <Icon name="close" iconFamily="Ionicons" size={22} color={Colors.text} />
         </TouchableOpacity>
       </View>
     </Modal>

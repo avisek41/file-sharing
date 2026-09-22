@@ -1,20 +1,27 @@
 import { StyleSheet } from "react-native";
-import { screenHeight, screenWidth } from "../utils/Constants";
+import { Colors, screenHeight } from "../utils/Constants";
 
 export const modalStyles = StyleSheet.create({
     modalContainer: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: Colors.background,
     },
     qrContainer: {
-        marginHorizontal: 20,
-        marginTop: screenHeight * 0.12,
-        padding: 20,
-        borderColor: "#ccc",
+        marginHorizontal: 24,
+        marginTop: screenHeight * 0.08,
+        padding: 24,
+        borderRadius: 24,
+        backgroundColor: Colors.surface,
+        borderWidth: 1,
+        borderColor: Colors.border,
         alignSelf: 'center',
         justifyContent: "center",
         alignItems: 'center',
-        overflow: 'hidden'
+        shadowColor: Colors.primary,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.12,
+        shadowRadius: 20,
+        elevation: 8,
     },
     noCameraImage: {
         width: '100%',
@@ -30,25 +37,29 @@ export const modalStyles = StyleSheet.create({
         width: '100%',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 25
+        paddingHorizontal: 32,
+        paddingVertical: 24,
     },
     infoText1: {
-        fontFamily: 'Okra-Medium',
+        fontFamily: 'Okra-Bold',
         textAlign: "center",
-        opacity: 0.7,
-        marginBottom: 20
+        fontSize: 15,
+        color: Colors.text,
+        marginBottom: 8,
     },
     infoText2: {
         fontFamily: 'Okra-Medium',
         textAlign: "center",
-        fontSize: 14
+        fontSize: 13,
+        color: Colors.text_secondary,
+        lineHeight: 19,
     },
     skeleton: {
         width: 250,
         height: 250,
-        borderRadius: 10,
+        borderRadius: 16,
         overflow: 'hidden',
-        backgroundColor: '#f0f0f0',
+        backgroundColor: Colors.secondary_light,
     },
     shimmerOverlay: {
         position: 'absolute',
@@ -63,17 +74,19 @@ export const modalStyles = StyleSheet.create({
         height: '100%',
     },
     closeButton: {
-        padding: 4,
+        padding: 8,
         borderRadius: 100,
         zIndex: 4,
         position: 'absolute',
-        top: 10,
-        right: 10,
-        shadowOffset: { width: 1, height: 1 },
-        shadowOpacity: 0.5,
-        elevation: 5,
-        shadowRadius: 5,
-        shadowColor: "#888",
-        backgroundColor: "#fff",
+        top: 16,
+        right: 16,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        elevation: 3,
+        shadowRadius: 6,
+        shadowColor: "#000",
+        backgroundColor: Colors.surface,
+        borderWidth: 1,
+        borderColor: Colors.border_light,
     }
 })

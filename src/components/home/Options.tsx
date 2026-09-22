@@ -38,64 +38,84 @@ const Options: FC<{
     <View style={optionStyles.container}>
       <TouchableOpacity
         style={optionStyles.subContainer}
+        activeOpacity={0.7}
         onPress={() => handleUniversalPicker('images')}>
-        <Icon
-          name="images"
-          iconFamily="Ionicons"
-          color={Colors.primary}
-          size={20}
-        />
+        <View style={optionStyles.iconCircle}>
+          <Icon
+            name="images"
+            iconFamily="Ionicons"
+            color={Colors.primary}
+            size={22}
+          />
+        </View>
         <CustomText
-          fontFamily="Okra-Medium"
-          style={{marginTop: 4, textAlign: 'center'}}>
-          Photo
+          fontFamily="Okra-Bold"
+          fontSize={12}
+          color={Colors.text}
+          style={{textAlign: 'center'}}>
+          Photos
         </CustomText>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={optionStyles.subContainer}
+        activeOpacity={0.7}
         onPress={() => handleUniversalPicker('file')}>
-        <Icon
-          name="musical-notes-sharp"
-          iconFamily="Ionicons"
-          color={Colors.primary}
-          size={20}
-        />
+        <View style={optionStyles.iconCircle}>
+          <Icon
+            name="musical-notes-sharp"
+            iconFamily="Ionicons"
+            color={Colors.primary}
+            size={22}
+          />
+        </View>
         <CustomText
-          fontFamily="Okra-Medium"
-          style={{marginTop: 4, textAlign: 'center'}}>
+          fontFamily="Okra-Bold"
+          fontSize={12}
+          color={Colors.text}
+          style={{textAlign: 'center'}}>
           Audio
         </CustomText>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={optionStyles.subContainer}
+        activeOpacity={0.7}
         onPress={() => handleUniversalPicker('file')}>
-        <Icon
-          name="folder-open"
-          iconFamily="Ionicons"
-          color={Colors.primary}
-          size={20}
-        />
+        <View style={optionStyles.iconCircle}>
+          <Icon
+            name="folder-open"
+            iconFamily="Ionicons"
+            color={Colors.primary}
+            size={22}
+          />
+        </View>
         <CustomText
-          fontFamily="Okra-Medium"
-          style={{marginTop: 4, textAlign: 'center'}}>
+          fontFamily="Okra-Bold"
+          fontSize={12}
+          color={Colors.text}
+          style={{textAlign: 'center'}}>
           Files
         </CustomText>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={optionStyles.subContainer}
+        activeOpacity={0.7}
         onPress={() => handleUniversalPicker('file')}>
-        <Icon
-          name="contacts"
-          iconFamily="MaterialCommunityIcons"
-          color={Colors.primary}
-          size={20}
-        />
+        <View style={optionStyles.iconCircle}>
+          <Icon
+            name="contacts"
+            iconFamily="MaterialCommunityIcons"
+            color={Colors.primary}
+            size={22}
+          />
+        </View>
         <CustomText
-          fontFamily="Okra-Medium"
-          style={{marginTop: 4, textAlign: 'center'}}>
+          fontFamily="Okra-Bold"
+          fontSize={12}
+          color={Colors.text}
+          style={{textAlign: 'center'}}>
           Contacts
         </CustomText>
       </TouchableOpacity>

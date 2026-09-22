@@ -113,7 +113,7 @@ const ReceiveScreen: FC = () => {
 
   return (
     <LinearGradient
-      colors={['#FFFFFF', '#4DA0DE', '#3387C5']}
+      colors={['#FFFFFF', '#EFF6FF', '#60A5FA', '#0066FF']}
       style={sendStyles.container}
       start={{x: 0, y: 1}}
       end={{x: 0, y: 0}}>
@@ -153,7 +153,7 @@ const ReceiveScreen: FC = () => {
               name="qrcode"
               iconFamily="MaterialCommunityIcons"
               color={Colors.primary}
-              size={16}
+              size={18}
             />
             <CustomText fontFamily="Okra-Bold" color={Colors.primary}>
               Show QR
@@ -182,8 +182,8 @@ const ReceiveScreen: FC = () => {
           <Icon
             name="arrow-back"
             iconFamily="Ionicons"
-            size={16}
-            color="#000"
+            size={20}
+            color={Colors.text}
           />
         </TouchableOpacity>
       </View>

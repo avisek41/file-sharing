@@ -169,7 +169,7 @@ const SendScreen: FC = () => {
 
   return (
     <LinearGradient
-      colors={['#FFFFFF', '#B689ED', '#A066E5']}
+      colors={['#FFFFFF', '#E0F2FE', '#38BDF8', '#0066FF']}
       style={sendStyles.container}
       start={{x: 0, y: 1}}
       end={{x: 0, y: 0}}>
@@ -260,8 +260,8 @@ const SendScreen: FC = () => {
           <Icon
             name="arrow-back"
             iconFamily="Ionicons"
-            size={16}
-            color="#000"
+            size={20}
+            color={Colors.text}
           />
         </TouchableOpacity>
       </View>
