@@ -1,8 +1,9 @@
-import {View, StyleSheet, Image} from 'react-native';
+import {View, StyleSheet, Image, Platform} from 'react-native';
 import React from 'react';
 import CustomText from '../global/CustomText';
 import {commonStyles} from '../../styles/commonStyles';
 import {Colors} from '../../utils/Constants';
+import {RFValue} from 'react-native-responsive-fontsize';
 
 const Misc = () => {
   return (
@@ -18,19 +19,12 @@ const Misc = () => {
         </View>
       </View>
 
-      <View style={styles.bannerWrapper}>
-        <Image
-          source={require('../../assets/icons/adbanner.png')}
-          style={styles.adBanner}
-        />
-      </View>
-
       <View style={[commonStyles.flexRowBetween, styles.promoCard]}>
         <View style={styles.promoTextContainer}>
-          <CustomText fontFamily="Okra-Bold" style={styles.text} fontSize={18} color={Colors.text}>
+          <CustomText fontFamily="Okra-Bold" style={styles.text} fontSize={16} color={Colors.text}>
             #1 Fast & Secure File Sharing App
           </CustomText>
-          <CustomText fontFamily="Okra-Medium" fontSize={12} color={Colors.text_secondary} style={{marginTop: 4}}>
+          <CustomText fontFamily="Okra-Medium" style={styles.subText} fontSize={11} color={Colors.text_secondary}>
             Direct P2P transfer with zero internet usage
           </CustomText>
         </View>
@@ -76,29 +70,35 @@ const styles = StyleSheet.create({
   },
   promoCard: {
     backgroundColor: Colors.surface,
-    borderRadius: 16,
+    borderRadius: 18,
     padding: 16,
     marginTop: 18,
     borderWidth: 1,
     borderColor: Colors.border,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowColor: Colors.primary,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
   },
   promoTextContainer: {
-    width: '65%',
+    flex: 1,
+    paddingRight: 10,
   },
   text: {
-    lineHeight: 22,
+    lineHeight: RFValue(22),
+    paddingBottom: 4,
+  },
+  subText: {
+    marginTop: 6,
+    lineHeight: RFValue(16),
+    paddingBottom: 4,
   },
   image: {
     resizeMode: 'contain',
-    height: 90,
-    width: '30%',
+    height: 80,
+    width: 80,
   },
 });
 
 export default Misc;
-

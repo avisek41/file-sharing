@@ -14,6 +14,7 @@ export const bottomTabStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.08,
     elevation: 10,
+    zIndex: 10,
     borderTopWidth: 1,
     borderColor: Colors.border,
     shadowRadius: 12,

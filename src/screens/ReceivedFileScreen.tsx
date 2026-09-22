@@ -11,15 +11,10 @@ import {connectionStyles} from '../styles/connectionStyles';
 import {formatFileSize} from '../utils/libraryHelpers';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import {goBack} from '../utils/NavigationUtil';
-import {useRoute} from '@react-navigation/native';
 
 const statusBarHeight = Platform.OS === 'android' ? (StatusBar.currentHeight || 28) : 0;
 
 const ReceivedFileScreen: FC = () => {
-  const route = useRoute<any>();
-  const [activeTab, setActiveTab] = useState<'files' | 'history'>(
-    route?.params?.initialTab || 'files',
-  );
   const [receivedFiles, setReceivedFiles] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -152,11 +147,6 @@ const ReceivedFileScreen: FC = () => {
     );
   };
 
-  const displayedFiles =
-    activeTab === 'history'
-      ? [...receivedFiles].sort((a, b) => (b.mtime || 0) - (a.mtime || 0))
-      : receivedFiles;
-
   return (
     <LinearGradient
       colors={['#FFFFFF', '#F0F7FF', '#BAE6FD', '#38BDF8']}
@@ -172,7 +162,7 @@ const ReceivedFileScreen: FC = () => {
 
       <View style={[sendStyles.mainContainer, {paddingTop: statusBarHeight + 6}]}>
         {/* Top Header Row with Back Button */}
-        <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 12}}>
+        <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 16}}>
           <TouchableOpacity
             onPress={goBack}
             activeOpacity={0.7}
@@ -199,92 +189,21 @@ const ReceivedFileScreen: FC = () => {
             />
           </TouchableOpacity>
 
-          <CustomText fontFamily="Okra-Bold" fontSize={17} color={Colors.text}>
+          <CustomText fontFamily="Okra-Bold" fontSize={18} color={Colors.text}>
             Received Files
           </CustomText>
 
           <View style={{width: 40}} />
         </View>
 
-        {/* Segmented Tab Switcher */}
-        <View style={{flexDirection: 'row', justifyContent: 'center', marginBottom: 14, gap: 10, paddingHorizontal: 16}}>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => setActiveTab('files')}
-            style={{
-              flex: 1,
-              paddingVertical: 9,
-              borderRadius: 12,
-              backgroundColor: activeTab === 'files' ? Colors.primary : 'rgba(255,255,255,0.85)',
-              alignItems: 'center',
-              flexDirection: 'row',
-              justifyContent: 'center',
-              gap: 6,
-              borderWidth: 1,
-              borderColor: activeTab === 'files' ? Colors.primary : Colors.border,
-              shadowColor: Colors.primary,
-              shadowOffset: {width: 0, height: 2},
-              shadowOpacity: activeTab === 'files' ? 0.2 : 0.05,
-              shadowRadius: 4,
-              elevation: activeTab === 'files' ? 3 : 1,
-            }}>
-            <Icon
-              name="folder-open"
-              iconFamily="Ionicons"
-              size={15}
-              color={activeTab === 'files' ? '#fff' : Colors.text_secondary}
-            />
-            <CustomText
-              fontFamily="Okra-Bold"
-              fontSize={13}
-              color={activeTab === 'files' ? '#fff' : Colors.text_secondary}>
-              All Files
-            </CustomText>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => setActiveTab('history')}
-            style={{
-              flex: 1,
-              paddingVertical: 9,
-              borderRadius: 12,
-              backgroundColor: activeTab === 'history' ? Colors.primary : 'rgba(255,255,255,0.85)',
-              alignItems: 'center',
-              flexDirection: 'row',
-              justifyContent: 'center',
-              gap: 6,
-              borderWidth: 1,
-              borderColor: activeTab === 'history' ? Colors.primary : Colors.border,
-              shadowColor: Colors.primary,
-              shadowOffset: {width: 0, height: 2},
-              shadowOpacity: activeTab === 'history' ? 0.2 : 0.05,
-              shadowRadius: 4,
-              elevation: activeTab === 'history' ? 3 : 1,
-            }}>
-            <Icon
-              name="time"
-              iconFamily="Ionicons"
-              size={15}
-              color={activeTab === 'history' ? '#fff' : Colors.text_secondary}
-            />
-            <CustomText
-              fontFamily="Okra-Bold"
-              fontSize={13}
-              color={activeTab === 'history' ? '#fff' : Colors.text_secondary}>
-              History
-            </CustomText>
-          </TouchableOpacity>
-        </View>
-
         {isLoading ? (
           <ActivityIndicator size="small" color={Colors.primary} style={{marginTop: 40}} />
         ) : (
           <>
-            {displayedFiles?.length > 0 ? (
+            {receivedFiles?.length > 0 ? (
               <FlatList
-                key={`${activeTab}-${displayedFiles.length}`}
-                data={displayedFiles}
+                key={receivedFiles.length}
+                data={receivedFiles}
                 keyExtractor={item => item.id}
                 renderItem={renderItem}
                 contentContainerStyle={[connectionStyles.fileList, {paddingHorizontal: 16}]}
