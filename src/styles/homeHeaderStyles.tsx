@@ -1,5 +1,7 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, Platform, StatusBar } from "react-native";
 import { Colors, screenHeight, screenWidth } from "../utils/Constants";
+
+const statusBarHeight = Platform.OS === 'android' ? (StatusBar.currentHeight || 28) : 0;
 
 export const homeHeaderStyles = StyleSheet.create({
     mainContainer: {
@@ -7,7 +9,8 @@ export const homeHeaderStyles = StyleSheet.create({
     },
     container: {
         paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingTop: Platform.OS === 'android' ? statusBarHeight + 10 : 8,
+        paddingBottom: 14,
         zIndex: 4,
     },
     curve: {
@@ -16,9 +19,15 @@ export const homeHeaderStyles = StyleSheet.create({
         zIndex: 3,
         width: '100%',
     },
+    logoWrapper: {
+        height: 44,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 8,
+    },
     logo: {
-        width: screenWidth * 0.42,
-        height: screenHeight * 0.052,
+        width: Math.min(screenWidth * 0.44, 160),
+        height: 38,
         resizeMode: 'contain',
     },
     headerButton: {

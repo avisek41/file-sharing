@@ -39,12 +39,6 @@ const Misc = () => {
           style={styles.image}
         />
       </View>
-
-      <View style={styles.footerContainer}>
-        <CustomText fontFamily="Okra-Bold" style={styles.text2} fontSize={12} color={Colors.text_secondary}>
-          Made with ❤️ - Avisek
-        </CustomText>
-      </View>
     </View>
   );
 };
@@ -98,13 +92,6 @@ const styles = StyleSheet.create({
   },
   text: {
     lineHeight: 22,
-  },
-  footerContainer: {
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  text2: {
-    opacity: 0.8,
   },
   image: {
     resizeMode: 'contain',

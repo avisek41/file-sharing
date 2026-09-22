@@ -15,7 +15,7 @@ const AbsoluteQRBottom = () => {
         <TouchableOpacity
           style={bottomTabStyles.navItem}
           activeOpacity={0.7}
-          onPress={() => navigate('ReceivedFileScreen')}>
+          onPress={() => navigate('ReceivedFileScreen', {initialTab: 'files'})}>
           <Icon
             name="folder-open"
             iconFamily="Ionicons"
@@ -37,7 +37,7 @@ const AbsoluteQRBottom = () => {
         <TouchableOpacity
           style={bottomTabStyles.navItem}
           activeOpacity={0.7}
-          onPress={() => navigate('ReceivedFileScreen')}>
+          onPress={() => navigate('ReceivedFileScreen', {initialTab: 'history'})}>
           <Icon
             name="time-outline"
             iconFamily="Ionicons"

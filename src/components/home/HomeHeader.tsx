@@ -1,4 +1,4 @@
-import {View, Text, SafeAreaView, TouchableOpacity} from 'react-native';
+import {View, Text, SafeAreaView, TouchableOpacity, StatusBar, Platform} from 'react-native';
 import React, {useState} from 'react';
 import {homeHeaderStyles} from '../../styles/homeHeaderStyles';
 import {commonStyles} from '../../styles/commonStyles';
@@ -13,15 +13,22 @@ const HomeHeader = () => {
 
   return (
     <View style={homeHeaderStyles.mainContainer}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
+      />
       <SafeAreaView />
       <View style={[commonStyles.flexRowBetween, homeHeaderStyles.container]}>
-        <TouchableOpacity style={homeHeaderStyles.headerButton}>
+        <TouchableOpacity style={homeHeaderStyles.headerButton} activeOpacity={0.7}>
           <Icon iconFamily="Ionicons" name="menu" size={22} color="#fff" />
         </TouchableOpacity>
-        <Image
-          source={require('../../assets/images/logo_t.png')}
-          style={homeHeaderStyles.logo}
-        />
+        <View style={homeHeaderStyles.logoWrapper}>
+          <Image
+            source={require('../../assets/images/logo_t.png')}
+            style={homeHeaderStyles.logo}
+          />
+        </View>
         <TouchableOpacity
           style={homeHeaderStyles.profileButton}
           onPress={() => setVisible(true)}>
