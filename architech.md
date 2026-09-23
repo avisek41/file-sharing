@@ -1,110 +1,103 @@
-# ShareApp - Architecture & How It Works
+# 📲 ShareApp — Secure Offline File Sharing
 
-## 1. What is this Project? (In Simple Words)
-ShareApp is an offline, peer-to-peer (P2P) file sharing mobile app built with React Native (similar to SHAREit or Apple AirDrop). 
+> Think AirDrop meets SHAREit — but open, encrypted, and built with React Native.
 
-It lets two phones transfer photos, videos, and large files directly to each other using local Wi-Fi or a Mobile Hotspot. 
-- **Zero Internet Required:** It does not use mobile data or internet bandwidth.
-- **Fast:** Transfers happen at local Wi-Fi router speeds (much faster than Bluetooth).
-- **Secure:** Transfers are encrypted so no one on the same Wi-Fi can spy on or steal your files.
+ShareApp lets two phones beam photos, videos, and large files **directly to each other** — no internet, no cloud, no middleman. Just local Wi-Fi or a mobile hotspot, and your file lands on the other device in seconds.
 
 ---
 
-## 2. Prerequisites (What You Need to Run & Use It)
+## ⚡ Why It's Different
 
-### For Users / Testing Devices:
-1. **Two Devices:** Two phones (Android or iOS).
-2. **Same Network Connection:** Both phones must be on the same local network:
-   - Option A: Both connected to the same Wi-Fi router.
-   - Option B: One phone turns on its Personal Hotspot, and the other phone connects to it.
-3. **App Permissions:**
-   - **Camera:** Required on the sender device to scan the receiver's QR code.
-   - **Local Network / Wi-Fi:** Required to find other devices on the network.
-   - **Storage / Files:** Required to select files to send and save received files to the device.
-
-### For Developers (Setup & Build):
-1. **Node.js** (v18 or higher) and **Yarn** or **npm**.
-2. **React Native Environment:** Android Studio (SDK 34+) or Xcode (for iOS).
-3. **Security Certificates (`tls_certs/` folder):**
-   - The app comes with pre-generated TLS certificates (`server-keystore.p12` and `server-cert.pem`).
-   - These are required to encrypt socket data between the two phones.
+|                               |                                                                               |
+| ----------------------------- | ----------------------------------------------------------------------------- |
+| 🌐 **Zero Internet Required** | Works entirely offline — no mobile data, no Wi-Fi router with internet needed |
+| 🚀 **Blazing Fast**           | Transfers at local Wi-Fi speeds — miles ahead of Bluetooth                    |
+| 🔒 **Encrypted End-to-End**   | TLS-secured sockets mean no one on the same network can snoop your files      |
 
 ---
 
-## 3. How It Works (The Whole Flow)
+## 🧰 Before You Start
 
-The app works in **4 simple stages**:
+### For Users
+
+| Requirement                            | Why                                                               |
+| -------------------------------------- | ----------------------------------------------------------------- |
+| 📱 Two devices (Android or iOS)        | Sender + Receiver                                                 |
+| 📶 Same local network                  | Either a shared Wi-Fi router, **or** one phone's Personal Hotspot |
+| 📷 Camera access                       | To scan the connection QR code                                    |
+| 🗂️ Local network + storage permissions | To discover devices and save incoming files                       |
+
+### For Developers
+
+- **Node.js** v18+ and **Yarn**/**npm**
+- **Android Studio** (SDK 34+) or **Xcode**
+- Pre-generated TLS certificates in `tls_certs/` (`server-keystore.p12`, `server-cert.pem`) — these encrypt every byte sent between phones
+
+---
+
+## 🔄 How It Works — 4 Simple Stages
 
 ```
-[Phone A: Receiver]                             [Phone B: Sender]
-        |                                               |
-  1. Opens "Receive"                                1. Opens "Send"
-     - Starts Local Server                             - Searches radar for nearby devices
-     - Shows QR Code & broadcasts on Wi-Fi             - Or opens Camera to scan QR
-        |                                               |
-        |<============= 2. CONNECTS VIA TLS ===========>|
-        |      (Phones establish secure handshake)      |
-        |                                               |
-        |<------------- 3. FILE INFO SENT --------------|
-        |      ("I'm sending movie.mp4, 50MB,           |
-        |       split into 8KB pieces")                 |
-        |                                               |
-        |-------------- "SEND PIECE #1" --------------->|
-        |<------------- [SENDS PIECE #1] ---------------|
-        |-------------- "SEND PIECE #2" --------------->|
-        |<------------- [SENDS PIECE #2] ---------------|
-        |               (Repeats until 100%)            |
-        |                                               |
-  4. Combines all pieces                                4. Transfer Complete!
-     - Saves to Downloads/ShareApp
-     - Ready to open or view
+   📱 RECEIVER                                    📱 SENDER
+        │                                              │
+   1️⃣  Taps "Receive"                            1️⃣  Taps "Send"
+      • Starts local server                          • Scans for nearby devices
+      • Shows QR code                                • Or scans receiver's QR
+        │                                              │
+        │◄═══════ 2️⃣  SECURE TLS HANDSHAKE ═══════════►│
+        │                                              │
+        │◄────── 3️⃣  "Sending movie.mp4, 50MB,         │
+        │           split into 8KB pieces" ────────────│
+        │                                              │
+        │──────── "Send piece #1" ────────────────────►│
+        │◄─────────────────────────────── [piece #1] ──│
+        │──────── "Send piece #2" ────────────────────►│
+        │◄─────────────────────────────── [piece #2] ──│
+        │            ... repeats to 100% ...            │
+        │                                              │
+   4️⃣  File saved to Gallery ✅                  4️⃣  Transfer complete! ✅
 ```
 
-### Stage 1: Finding Each Other (Discovery)
-- **Receiver:** Taps "Receive". The phone creates a local server on port `4000`, displays a QR code containing its IP address, and sends out a quiet signal (UDP broadcast) on Wi-Fi saying *"I am here!"*.
-- **Sender:** Taps "Send". The phone searches the Wi-Fi network for the receiver's signal (radar screen). If it cannot find it automatically, the user simply scans the QR code on the receiver's screen.
+### 1️⃣ Discovery — "I'm here!"
 
-### Stage 2: Making a Secure Handshake (Connection)
-- The sender phone connects to the receiver phone using a direct TCP socket.
-- Both devices check security certificates (`TLS`) to make sure the connection is encrypted.
-- Both screens immediately switch to the active **Connection Screen** showing connected device details.
+The **receiver** starts a local server on port `4000`, shows a QR code with its IP address, and quietly broadcasts its presence over Wi-Fi (UDP).
+The **sender** either picks up that signal automatically ("radar" view) or scans the QR code directly — no typing IPs by hand.
 
-### Stage 3: Slicing and Sending the File (Transfer Flow)
-Sending a giant file all at once can freeze phones or lose data if interrupted. To prevent this:
-1. **Slicing:** The sender splits the selected file into small **8 KB chunks**.
-2. **Metadata First:** The sender tells the receiver: *"I am sending a file named photo.jpg, size 4 MB, consisting of 500 small pieces."*
-3. **Step-by-step Delivery (Ping-Pong):**
-   - Receiver: *"Send piece 0."*
-   - Sender: *Sends piece 0.*
-   - Receiver: *"Got piece 0. Now send piece 1."*
-   - Sender: *Sends piece 1.*
-4. This guarantees that **no data is lost** and allows both phones to display smooth, real-time progress bars.
+### 2️⃣ Secure Handshake
 
-### Stage 4: Putting the File Back Together (Reassembly & Saving)
-- When the receiver gets the final chunk, it combines all 8 KB pieces back into the original file.
-- The file is saved to the phone's storage in the `Download/ShareApp` folder.
-- The app automatically registers the file with Android's Media Gallery so photos and videos immediately show up in the phone's Gallery or Files app.
-- An **"Open"** button appears, letting the user view the file with one tap.
+Sender and receiver open a direct TCP socket and verify each other using TLS certificates. The moment they connect, both screens switch to a live **Connection Screen**.
+
+### 3️⃣ Slicing & Sending
+
+Sending a huge file in one shot risks freezing the app or losing data mid-transfer — so instead:
+
+1. The file is broken into **8 KB chunks**.
+2. Metadata goes first: _"Here comes photo.jpg, 4 MB, 500 pieces."_
+3. Chunks are sent in a request–confirm rhythm (_"send piece 1" → sent → "send piece 2"..._), guaranteeing **zero data loss** and a smooth, real-time progress bar.
+
+### 4️⃣ Reassembly
+
+The receiver stitches all the chunks back into the original file, saves it to `Download/ShareApp`, and — for photos/videos — automatically registers it with the phone's Gallery. One tap opens it, no digging through folders.
 
 ---
 
-## 4. Why are the `tls_certs` Files Needed?
+## 🔐 Why TLS Certificates Matter
 
-In the `tls_certs/` folder, you will find files like `server-keystore.p12` and `server-cert.pem`.
+| Without TLS                                                                         | With TLS                                                            |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| ❌ Anyone on the same Wi-Fi (office, café) can snoop your transfer with basic tools | ✅ Data is scrambled — intercepted packets are unreadable gibberish |
 
-* **Plain TCP (Without Certs):** Anyone on the same Wi-Fi (like in an office or coffee shop) using basic tools could snoop on and download the pictures and files you are transferring.
-* **TLS TCP (With Certs):** The files are scrambled using military-grade encryption during transfer. Even if someone intercepts the Wi-Fi packets, all they see is random unreadable gibberish.
-* **Why Self-Signed?** Because normal SSL providers (like Google or Let's Encrypt) only work for website domains on the internet. Since this app works completely **offline** on local IP addresses, we generate our own secure certificates directly inside the app.
+**Why self-signed certs?** Normal SSL providers only issue certificates for internet domains. Since ShareApp runs entirely offline on local IPs, it generates and ships its own certificates baked right into the app.
 
 ---
 
-## 5. Summary of Tech Stack
+## 🛠️ Tech Stack at a Glance
 
-| Component | Library Used | What It Does |
-| :--- | :--- | :--- |
-| **Encrypted TCP Connection** | `react-native-tcp-socket` | Fast, encrypted direct communication between phones |
-| **Radar Discovery** | `react-native-udp` | Finds nearby phones on the Wi-Fi without typing IPs |
-| **QR Code Scanner** | `react-native-vision-camera` | Instant camera-based connection |
-| **QR Code Generator** | `react-native-qrcode-svg` | Generates connection QR codes on screen |
-| **State & Progress** | `zustand` | Tracks bytes sent/received and file chunks in real-time |
-| **File I/O & MediaStore** | `react-native-fs` & `react-native-blob-util` | Reads, slices, saves, and indexes files into the phone's Gallery/Downloads |
+| What It Does                           | Library                                      |
+| -------------------------------------- | -------------------------------------------- |
+| 🔌 Encrypted phone-to-phone connection | `react-native-tcp-socket`                    |
+| 📡 Finds nearby devices automatically  | `react-native-udp`                           |
+| 📷 Scans connection QR codes           | `react-native-vision-camera`                 |
+| 🔳 Generates connection QR codes       | `react-native-qrcode-svg`                    |
+| 📊 Tracks live transfer progress       | `zustand`                                    |
+| 💾 Reads, slices & saves files         | `react-native-fs` / `react-native-blob-util` |
