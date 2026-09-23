@@ -15,7 +15,7 @@ import {connectionStyles} from '../styles/connectionStyles';
 import CustomText from '../components/global/CustomText';
 import Options from '../components/home/Options';
 import {formatFileSize} from '../utils/libraryHelpers';
-import {Colors} from '../utils/Constants';
+import {Colors, BrandGradients} from '../utils/Constants';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import {Platform} from 'react-native';
 
@@ -147,7 +147,7 @@ const ConnectionScreen: FC = () => {
 
   return (
     <LinearGradient
-      colors={['#FFFFFF', '#F0F7FF', '#BAE6FD', '#38BDF8']}
+      colors={BrandGradients.connection}
       style={sendStyles.container}
       start={{x: 0, y: 1}}
       end={{x: 0, y: 0}}>

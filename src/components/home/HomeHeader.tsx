@@ -45,12 +45,12 @@ const HomeHeader = () => {
         style={homeHeaderStyles.curve}>
         <Defs>
           <LinearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0%" stopColor="#0052CC" stopOpacity="1" />
-            <Stop offset="100%" stopColor="#00A3FF" stopOpacity="1" />
+            <Stop offset="0%" stopColor="#5B21B6" stopOpacity="1" />
+            <Stop offset="100%" stopColor="#A855F7" stopOpacity="1" />
           </LinearGradient>
         </Defs>
 
-        <Path fill="#00A3FF" d={svgPath} />
+        <Path fill="#A855F7" d={svgPath} />
         <Path fill="url(#grad)" d={svgPath} />
       </Svg>
 

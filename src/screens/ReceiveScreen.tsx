@@ -6,7 +6,7 @@ import {SafeAreaView} from 'react-native';
 import Icon from '../components/global/Icon';
 import CustomText from '../components/global/CustomText';
 import BreakerText from '../components/ui/BreakerText';
-import {Colors} from '../utils/Constants';
+import {Colors, BrandGradients} from '../utils/Constants';
 import LottieView from 'lottie-react-native';
 import QRGenerateModal from '../components/modals/QRGenerateModal';
 import DeviceInfo from 'react-native-device-info';
@@ -113,7 +113,7 @@ const ReceiveScreen: FC = () => {
 
   return (
     <LinearGradient
-      colors={['#FFFFFF', '#EFF6FF', '#60A5FA', '#0066FF']}
+      colors={BrandGradients.receive}
       style={sendStyles.container}
       start={{x: 0, y: 1}}
       end={{x: 0, y: 0}}>
@@ -152,10 +152,10 @@ const ReceiveScreen: FC = () => {
             <Icon
               name="qrcode"
               iconFamily="MaterialCommunityIcons"
-              color={Colors.primary}
+              color={Colors.amber_dark}
               size={18}
             />
-            <CustomText fontFamily="Okra-Bold" color={Colors.primary}>
+            <CustomText fontFamily="Okra-Bold" color={Colors.amber_dark}>
               Show QR
             </CustomText>
           </TouchableOpacity>

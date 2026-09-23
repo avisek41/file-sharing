@@ -9,7 +9,7 @@ import Icon from '../components/global/Icon';
 import CustomText from '../components/global/CustomText';
 import BreakerText from '../components/ui/BreakerText';
 import {TouchableOpacity} from 'react-native';
-import {Colors, screenWidth} from '../utils/Constants';
+import {Colors, BrandGradients, screenWidth} from '../utils/Constants';
 import LottieView from 'lottie-react-native';
 import {goBack, navigate} from '../utils/NavigationUtil';
 import dgram from 'react-native-udp';
@@ -169,7 +169,7 @@ const SendScreen: FC = () => {
 
   return (
     <LinearGradient
-      colors={['#FFFFFF', '#E0F2FE', '#38BDF8', '#0066FF']}
+      colors={BrandGradients.send}
       style={sendStyles.container}
       start={{x: 0, y: 1}}
       end={{x: 0, y: 0}}>
