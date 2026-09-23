@@ -39,12 +39,32 @@ const ReceivedFileScreen: FC = () => {
       }
 
       const files = await RNFS.readDir(appDir);
-      const actualFiles = files.filter(file => {
+      let actualFiles = files.filter(file => {
         if (!file.name || file.name.startsWith('.')) {
           return false;
         }
         return typeof file.isFile === 'function' ? file.isFile() : true;
       });
+
+      // On iOS, also include files in root DocumentDirectory if any
+      if (Platform.OS === 'ios') {
+        try {
+          const rootFiles = await RNFS.readDir(baseDir);
+          const rootActual = rootFiles.filter(file => {
+            if (!file.name || file.name.startsWith('.') || file.name === 'ShareApp') {
+              return false;
+            }
+            return typeof file.isFile === 'function' ? file.isFile() : true;
+          });
+          rootActual.forEach(rf => {
+            if (!actualFiles.some(f => f.name === rf.name)) {
+              actualFiles.push(rf);
+            }
+          });
+        } catch (e) {
+          // ignore
+        }
+      }
 
       const formattedFiles = actualFiles.map(file => ({
         id: file.name,
@@ -311,6 +331,29 @@ const ReceivedFileScreen: FC = () => {
           </CustomText>
 
           <View style={{width: 42}} />
+        </View>
+
+        {/* Location Indicator Pill */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            alignSelf: 'center',
+            backgroundColor: 'rgba(124, 58, 237, 0.08)',
+            paddingHorizontal: 12,
+            paddingVertical: 5,
+            borderRadius: 14,
+            marginBottom: 14,
+            gap: 6,
+            borderWidth: 1,
+            borderColor: 'rgba(124, 58, 237, 0.14)',
+          }}>
+          <Icon name="folder-open" size={13} color={Colors.primary} iconFamily="Ionicons" />
+          <CustomText fontFamily="Okra-Medium" fontSize={11} color={Colors.primary}>
+            {Platform.OS === 'android'
+              ? 'Stored in: Internal Storage > Download > ShareApp'
+              : 'Stored in: Files > On My iPhone > Share App'}
+          </CustomText>
         </View>
 
         {isLoading ? (

@@ -11,6 +11,7 @@ import TcpSocket from 'react-native-tcp-socket';
 import DeviceInfo from 'react-native-device-info';
 import {Alert, Platform} from 'react-native';
 import RNFS from 'react-native-fs';
+import ReactNativeBlobUtil from 'react-native-blob-util';
 import {v4 as uuidv4} from 'uuid';
 import {produce} from 'immer';
 import {Buffer} from 'buffer';
@@ -274,6 +275,32 @@ export const TCPProvider: FC<{children: React.ReactNode}> = ({children}) => {
       );
 
       console.log('FILE SAVED SUCCESSFULLY✅ ', filePath);
+
+      // On Android, index file into MediaStore so it appears immediately in file managers & downloads
+      if (Platform.OS === 'android') {
+        try {
+          await RNFS.scanFile(filePath);
+          console.log('Android MediaScanner scanned file successfully');
+        } catch (scanErr) {
+          console.log('scanFile error:', scanErr);
+        }
+
+        try {
+          await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
+            {
+              name: chunkStore.name,
+              parentFolder: 'ShareApp',
+              mimeType: chunkStore.mimeType || '*/*',
+            },
+            'Download',
+            filePath,
+          );
+          console.log('Android MediaStore copyToMediaStore successful');
+        } catch (mediaErr) {
+          console.log('copyToMediaStore note:', mediaErr);
+        }
+      }
+
       resetChunkStore();
     } catch (error) {
       console.error('Error combining chunks or saving file:', error);
