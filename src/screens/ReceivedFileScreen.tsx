@@ -1,5 +1,5 @@
 import {View, Platform, ActivityIndicator, FlatList, TouchableOpacity, StatusBar} from 'react-native';
-import React, {FC, useEffect, useState} from 'react';
+import React, {FC, useEffect, useState, useMemo, useCallback} from 'react';
 import RNFS from 'react-native-fs';
 import Icon from '../components/global/Icon';
 import LinearGradient from 'react-native-linear-gradient';
@@ -12,14 +12,16 @@ import {formatFileSize} from '../utils/libraryHelpers';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import {goBack} from '../utils/NavigationUtil';
 import {useIsFocused} from '@react-navigation/native';
+import {useTCP} from '../service/TCPProvider';
 
 const statusBarHeight = Platform.OS === 'android' ? (StatusBar.currentHeight || 28) : 0;
 
 const ReceivedFileScreen: FC = () => {
-  const [receivedFiles, setReceivedFiles] = useState<any[]>([]);
+  const {receivedFiles: sessionReceivedFiles} = useTCP();
+  const [diskFiles, setDiskFiles] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const getFilesFromDirectory = async () => {
+  const getFilesFromDirectory = useCallback(async () => {
     setIsLoading(true);
     const baseDir =
       Platform.OS === 'android'
@@ -31,13 +33,18 @@ const ReceivedFileScreen: FC = () => {
       const exists = await RNFS.exists(appDir);
       if (!exists) {
         await RNFS.mkdir(appDir);
-        setReceivedFiles([]);
+        setDiskFiles([]);
         setIsLoading(false);
         return;
       }
 
       const files = await RNFS.readDir(appDir);
-      const actualFiles = files.filter(file => (typeof file.isFile === 'function' ? file.isFile() : true));
+      const actualFiles = files.filter(file => {
+        if (!file.name || file.name.startsWith('.')) {
+          return false;
+        }
+        return typeof file.isFile === 'function' ? file.isFile() : true;
+      });
 
       const formattedFiles = actualFiles.map(file => ({
         id: file.name,
@@ -47,21 +54,20 @@ const ReceivedFileScreen: FC = () => {
         mimeType: file.name.split('.').pop()?.toLowerCase() || 'unknown',
         mtime: file.mtime ? new Date(file.mtime).getTime() : 0,
         dateFormatted: file.mtime ? new Date(file.mtime).toLocaleDateString() : '',
+        available: true,
       }));
 
       // Sort by newest received first
       formattedFiles.sort((a, b) => b.mtime - a.mtime);
 
-      setTimeout(() => {
-        setReceivedFiles(formattedFiles);
-        setIsLoading(false);
-      }, 300);
+      setDiskFiles(formattedFiles);
+      setIsLoading(false);
     } catch (error) {
       console.error('Error fetching received files:', error);
-      setReceivedFiles([]);
+      setDiskFiles([]);
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const isFocused = useIsFocused();
 
@@ -69,7 +75,39 @@ const ReceivedFileScreen: FC = () => {
     if (isFocused) {
       getFilesFromDirectory();
     }
-  }, [isFocused]);
+  }, [isFocused, getFilesFromDirectory]);
+
+  // Synchronize saved disk files with active in-memory session received files
+  const combinedFiles = useMemo(() => {
+    const list = [...diskFiles];
+    if (sessionReceivedFiles && sessionReceivedFiles.length > 0) {
+      sessionReceivedFiles.forEach((sFile: any) => {
+        const existingIdx = list.findIndex(
+          d => d.name === sFile.name || (sFile.id && d.id === sFile.id),
+        );
+        if (existingIdx !== -1) {
+          list[existingIdx] = {
+            ...list[existingIdx],
+            ...sFile,
+            uri: list[existingIdx].uri || sFile.uri,
+            available: sFile.available !== undefined ? sFile.available : true,
+          };
+        } else {
+          list.unshift({
+            id: sFile.id || sFile.name,
+            name: sFile.name,
+            size: sFile.size || 0,
+            uri: sFile.uri,
+            mimeType: (sFile.name || '').split('.').pop()?.toLowerCase() || 'unknown',
+            available: sFile.available !== undefined ? sFile.available : false,
+            dateFormatted: 'Today',
+            mtime: Date.now(),
+          });
+        }
+      });
+    }
+    return list;
+  }, [diskFiles, sessionReceivedFiles]);
 
   const renderThumbnail = (mimeType: string) => {
     const iconStyle = {
@@ -163,45 +201,58 @@ const ReceivedFileScreen: FC = () => {
           </View>
         </View>
 
-        <TouchableOpacity
-          onPress={() => {
-            const normalizedPath =
-              Platform.OS === 'ios' ? `file://${item?.uri}` : item?.uri;
+        {item?.available !== false ? (
+          <TouchableOpacity
+            onPress={() => {
+              const normalizedPath =
+                Platform.OS === 'ios' ? `file://${item?.uri}` : item?.uri;
 
-            if (Platform.OS === 'ios') {
-              ReactNativeBlobUtil.ios
-                .openDocument(normalizedPath)
-                .then(() => console.log('File opened successfully'))
-                .catch(err => console.error('Error opening file:', err));
-            } else {
-              ReactNativeBlobUtil.android
-                .actionViewIntent(normalizedPath, '*/*')
-                .then(() => console.log('File opened successfully'))
-                .catch(err => console.error('Error opening file:', err));
-            }
-          }}
-          style={{
-            backgroundColor: Colors.primary,
-            borderRadius: 18,
-            paddingVertical: 7,
-            paddingHorizontal: 16,
-            justifyContent: 'center',
-            alignItems: 'center',
-            shadowColor: Colors.primary,
-            shadowOffset: {width: 0, height: 2},
-            shadowOpacity: 0.3,
-            shadowRadius: 5,
-            elevation: 3,
-          }}
-          activeOpacity={0.8}>
-          <CustomText
-            numberOfLines={1}
-            color="#fff"
-            fontFamily="Okra-Bold"
-            fontSize={11}>
-            Open
-          </CustomText>
-        </TouchableOpacity>
+              if (Platform.OS === 'ios') {
+                ReactNativeBlobUtil.ios
+                  .openDocument(normalizedPath)
+                  .then(() => console.log('File opened successfully'))
+                  .catch(err => console.error('Error opening file:', err));
+              } else {
+                ReactNativeBlobUtil.android
+                  .actionViewIntent(normalizedPath, '*/*')
+                  .then(() => console.log('File opened successfully'))
+                  .catch(err => console.error('Error opening file:', err));
+              }
+            }}
+            style={{
+              backgroundColor: Colors.primary,
+              borderRadius: 18,
+              paddingVertical: 7,
+              paddingHorizontal: 16,
+              justifyContent: 'center',
+              alignItems: 'center',
+              shadowColor: Colors.primary,
+              shadowOffset: {width: 0, height: 2},
+              shadowOpacity: 0.3,
+              shadowRadius: 5,
+              elevation: 3,
+            }}
+            activeOpacity={0.8}>
+            <CustomText
+              numberOfLines={1}
+              color="#fff"
+              fontFamily="Okra-Bold"
+              fontSize={11}>
+              Open
+            </CustomText>
+          </TouchableOpacity>
+        ) : (
+          <View style={{paddingHorizontal: 8, alignItems: 'center'}}>
+            <ActivityIndicator color={Colors.primary} size="small" />
+            <CustomText
+              fontFamily="Okra-Medium"
+              fontSize={9}
+              color={Colors.primary}
+              style={{marginTop: 3}}>
+              Receiving...
+            </CustomText>
+          </View>
+        )}
       </View>
     );
   };
@@ -263,19 +314,22 @@ const ReceivedFileScreen: FC = () => {
         </View>
 
         {isLoading ? (
-          <ActivityIndicator size="small" color={Colors.primary} style={{marginTop: 40}} />
+          <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+            <ActivityIndicator size="small" color={Colors.primary} />
+          </View>
         ) : (
-          <>
-            {receivedFiles?.length > 0 ? (
+          <View style={{flex: 1}}>
+            {combinedFiles?.length > 0 ? (
               <FlatList
-                key={receivedFiles.length}
-                data={receivedFiles}
-                keyExtractor={item => item.id}
+                style={{flex: 1}}
+                data={combinedFiles}
+                keyExtractor={(item, index) => item.id || item.name || index.toString()}
                 renderItem={renderItem}
-                contentContainerStyle={{paddingHorizontal: 16, paddingBottom: 24}}
+                contentContainerStyle={{paddingHorizontal: 16, paddingBottom: 28, flexGrow: 1}}
+                showsVerticalScrollIndicator={false}
               />
             ) : (
-              <View style={[connectionStyles.noDataContainer, {alignItems: 'center', justifyContent: 'center'}]}>
+              <View style={[connectionStyles.noDataContainer, {flex: 1, alignItems: 'center', justifyContent: 'center'}]}>
                 <View
                   style={{
                     width: 72,
@@ -310,7 +364,7 @@ const ReceivedFileScreen: FC = () => {
                 </CustomText>
               </View>
             )}
-          </>
+          </View>
         )}
       </View>
     </LinearGradient>

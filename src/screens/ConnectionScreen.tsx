@@ -4,6 +4,7 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import React, {FC, useEffect, useState} from 'react';
 import {useTCP} from '../service/TCPProvider';
@@ -91,6 +92,24 @@ const ConnectionScreen: FC = () => {
     }
   }, [isConnected]);
 
+  const handleDisconnect = () => {
+    Alert.alert(
+      'Disconnect Device',
+      `Are you sure you want to disconnect from ${connectedDevice || 'this device'}?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Disconnect',
+          style: 'destructive',
+          onPress: () => disconnect(),
+        },
+      ],
+    );
+  };
+
   const handleTabChange = (tab: 'SENT' | 'RECEIVED') => {
     setActiveTab(tab);
   };
@@ -170,7 +189,8 @@ const ConnectionScreen: FC = () => {
             </View>
 
             <TouchableOpacity
-              onPress={() => disconnect()}
+              onPress={handleDisconnect}
+              activeOpacity={0.7}
               style={connectionStyles.disconnectButton}>
               <Icon
                 name="close-circle"

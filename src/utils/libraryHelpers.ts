@@ -1,6 +1,6 @@
 import {launchImageLibrary, Asset} from 'react-native-image-picker';
-import {pick} from '@react-native-documents/picker';
-import {PermissionsAndroid} from 'react-native';
+import {pick, types} from '@react-native-documents/picker';
+import {PermissionsAndroid, Platform} from 'react-native';
 
 type MediaPickedCallback = (media: Asset) => void;
 type FilePickedCallback = (file: any) => void;
@@ -31,9 +31,41 @@ export const pickImage = (onMediaPickedUp: MediaPickedCallback) => {
 export const pickDocument = async (onFilePickedUp: FilePickedCallback) => {
   try {
     const [pickResult] = await pick();
-    onFilePickedUp(pickResult);
+    if (pickResult) {
+      onFilePickedUp(pickResult);
+    }
   } catch (err: unknown) {
-    console.log(err);
+    console.log('Document picker error / cancelled:', err);
+  }
+};
+
+export const pickAudio = async (onFilePickedUp: FilePickedCallback) => {
+  try {
+    const [pickResult] = await pick({
+      type: [types.audio],
+    });
+    if (pickResult) {
+      onFilePickedUp(pickResult);
+    }
+  } catch (err: unknown) {
+    console.log('Audio picker error / cancelled:', err);
+  }
+};
+
+export const pickContact = async (onFilePickedUp: FilePickedCallback) => {
+  try {
+    const contactTypes =
+      Platform.OS === 'ios'
+        ? ['public.vcard', 'public.contact']
+        : ['text/vcard', 'text/x-vcard'];
+    const [pickResult] = await pick({
+      type: contactTypes,
+    });
+    if (pickResult) {
+      onFilePickedUp(pickResult);
+    }
+  } catch (err: unknown) {
+    console.log('Contact picker error / cancelled:', err);
   }
 };
 

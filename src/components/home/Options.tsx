@@ -6,7 +6,7 @@ import {Colors} from '../../utils/Constants';
 import CustomText from '../global/CustomText';
 import {useTCP} from '../../service/TCPProvider';
 import {navigate} from '../../utils/NavigationUtil';
-import {pickDocument, pickImage} from '../../utils/libraryHelpers';
+import {pickDocument, pickImage, pickAudio, pickContact} from '../../utils/libraryHelpers';
 
 const Options: FC<{
   isHome?: boolean;
@@ -27,9 +27,13 @@ const Options: FC<{
 
     if (type === 'images' && onMediaPickedUp) {
       pickImage(onMediaPickedUp);
-    }
-
-    if (type === 'file' && onFilePickedUp) {
+    } else if (type === 'audio' && onFilePickedUp) {
+      pickAudio(onFilePickedUp);
+    } else if (type === 'contacts' && onFilePickedUp) {
+      pickContact(onFilePickedUp);
+    } else if (type === 'file' && onFilePickedUp) {
+      pickDocument(onFilePickedUp);
+    } else if (onFilePickedUp) {
       pickDocument(onFilePickedUp);
     }
   };
@@ -60,7 +64,7 @@ const Options: FC<{
       <TouchableOpacity
         style={optionStyles.subContainer}
         activeOpacity={0.7}
-        onPress={() => handleUniversalPicker('file')}>
+        onPress={() => handleUniversalPicker('audio')}>
         <View style={optionStyles.iconCircle}>
           <Icon
             name="musical-notes-sharp"
@@ -102,7 +106,7 @@ const Options: FC<{
       <TouchableOpacity
         style={optionStyles.subContainer}
         activeOpacity={0.7}
-        onPress={() => handleUniversalPicker('file')}>
+        onPress={() => handleUniversalPicker('contacts')}>
         <View style={optionStyles.iconCircle}>
           <Icon
             name="contacts"
