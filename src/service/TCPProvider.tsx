@@ -239,11 +239,18 @@ export const TCPProvider: FC<{children: React.ReactNode}> = ({children}) => {
 
     try {
       const combinedChunks = Buffer.concat(chunkStore.chunkArray);
-      const platformPath =
-        Platform.OS == 'ios'
-          ? `${RNFS.DocumentDirectoryPath}`
-          : `${RNFS.DownloadDirectoryPath}`;
-      const filePath = `${platformPath}/${chunkStore.name}`;
+      const baseDir =
+        Platform.OS === 'ios'
+          ? RNFS.DocumentDirectoryPath
+          : RNFS.DownloadDirectoryPath;
+      const appDir = `${baseDir}/ShareApp`;
+
+      const dirExists = await RNFS.exists(appDir);
+      if (!dirExists) {
+        await RNFS.mkdir(appDir);
+      }
+
+      const filePath = `${appDir}/${chunkStore.name}`;
 
       await RNFS.writeFile(
         filePath,

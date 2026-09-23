@@ -11,6 +11,7 @@ import {connectionStyles} from '../styles/connectionStyles';
 import {formatFileSize} from '../utils/libraryHelpers';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import {goBack} from '../utils/NavigationUtil';
+import {useIsFocused} from '@react-navigation/native';
 
 const statusBarHeight = Platform.OS === 'android' ? (StatusBar.currentHeight || 28) : 0;
 
@@ -20,82 +21,107 @@ const ReceivedFileScreen: FC = () => {
 
   const getFilesFromDirectory = async () => {
     setIsLoading(true);
-    const platformPath =
+    const baseDir =
       Platform.OS === 'android'
-        ? `${RNFS.DownloadDirectoryPath}/`
-        : `${RNFS.DocumentDirectoryPath}/`;
+        ? RNFS.DownloadDirectoryPath
+        : RNFS.DocumentDirectoryPath;
+    const appDir = `${baseDir}/ShareApp`;
 
     try {
-      const exists = await RNFS.exists(platformPath);
+      const exists = await RNFS.exists(appDir);
       if (!exists) {
+        await RNFS.mkdir(appDir);
         setReceivedFiles([]);
         setIsLoading(false);
         return;
       }
 
-      const files = await RNFS.readDir(platformPath);
+      const files = await RNFS.readDir(appDir);
+      const actualFiles = files.filter(file => (typeof file.isFile === 'function' ? file.isFile() : true));
 
-      const formattedFiles = files.map(file => ({
+      const formattedFiles = actualFiles.map(file => ({
         id: file.name,
         name: file.name,
         size: file.size,
         uri: file.path,
-        mimeType: file.name.split('.').pop() || 'unknown',
+        mimeType: file.name.split('.').pop()?.toLowerCase() || 'unknown',
         mtime: file.mtime ? new Date(file.mtime).getTime() : 0,
         dateFormatted: file.mtime ? new Date(file.mtime).toLocaleDateString() : '',
       }));
+
+      // Sort by newest received first
+      formattedFiles.sort((a, b) => b.mtime - a.mtime);
+
       setTimeout(() => {
         setReceivedFiles(formattedFiles);
         setIsLoading(false);
-      }, 500);
+      }, 300);
     } catch (error) {
-      console.error('Error fetching files:', error);
+      console.error('Error fetching received files:', error);
       setReceivedFiles([]);
       setIsLoading(false);
     }
   };
 
+  const isFocused = useIsFocused();
+
   useEffect(() => {
-    getFilesFromDirectory();
-  }, []);
+    if (isFocused) {
+      getFilesFromDirectory();
+    }
+  }, [isFocused]);
 
   const renderThumbnail = (mimeType: string) => {
+    const iconStyle = {
+      width: 44,
+      height: 44,
+      borderRadius: 14,
+      backgroundColor: 'rgba(124, 58, 237, 0.08)',
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const,
+    };
+
     switch (mimeType) {
       case 'mp3':
+      case 'wav':
+      case 'aac':
         return (
-          <View style={connectionStyles.fileIconWrapper}>
+          <View style={iconStyle}>
             <Icon
               name="musical-notes"
-              size={18}
+              size={20}
               color={Colors.primary}
               iconFamily="Ionicons"
             />
           </View>
         );
       case 'mp4':
+      case 'mkv':
+      case 'mov':
         return (
-          <View style={connectionStyles.fileIconWrapper}>
-            <Icon name="videocam" size={18} color="#10B981" iconFamily="Ionicons" />
+          <View style={[iconStyle, {backgroundColor: 'rgba(16, 185, 129, 0.1)'}]}>
+            <Icon name="videocam" size={20} color="#10B981" iconFamily="Ionicons" />
           </View>
         );
       case 'jpg':
       case 'png':
       case 'jpeg':
+      case 'webp':
         return (
-          <View style={connectionStyles.fileIconWrapper}>
-            <Icon name="image" size={18} color="#F59E0B" iconFamily="Ionicons" />
+          <View style={[iconStyle, {backgroundColor: 'rgba(245, 158, 11, 0.1)'}]}>
+            <Icon name="image" size={20} color="#F59E0B" iconFamily="Ionicons" />
           </View>
         );
       case 'pdf':
         return (
-          <View style={connectionStyles.fileIconWrapper}>
-            <Icon name="document-text" size={18} color="#EF4444" iconFamily="Ionicons" />
+          <View style={[iconStyle, {backgroundColor: 'rgba(239, 68, 68, 0.1)'}]}>
+            <Icon name="document-text" size={20} color="#EF4444" iconFamily="Ionicons" />
           </View>
         );
       default:
         return (
-          <View style={connectionStyles.fileIconWrapper}>
-            <Icon name="folder" size={18} color={Colors.primary} iconFamily="Ionicons" />
+          <View style={iconStyle}>
+            <Icon name="folder" size={20} color={Colors.primary} iconFamily="Ionicons" />
           </View>
         );
     }
@@ -103,15 +129,36 @@ const ReceivedFileScreen: FC = () => {
 
   const renderItem = ({item}: any) => {
     return (
-      <View style={connectionStyles.fileItem}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: 14,
+          backgroundColor: '#FFFFFF',
+          borderRadius: 16,
+          marginBottom: 12,
+          borderWidth: 1,
+          borderColor: 'rgba(124, 58, 237, 0.1)',
+          shadowColor: Colors.primary,
+          shadowOffset: {width: 0, height: 4},
+          shadowOpacity: 0.14,
+          shadowRadius: 10,
+          elevation: 4,
+        }}>
         <View style={connectionStyles.fileInfoContainer}>
           {renderThumbnail(item?.mimeType)}
           <View style={connectionStyles.fileDetails}>
-            <CustomText numberOfLines={1} fontFamily="Okra-Bold" fontSize={11} color={Colors.text}>
+            <CustomText numberOfLines={1} fontFamily="Okra-Bold" fontSize={13} color={Colors.text}>
               {item.name}
             </CustomText>
-            <CustomText numberOfLines={1} fontFamily="Okra-Medium" fontSize={10} color={Colors.text_secondary} style={{marginTop: 2}}>
-              {item.mimeType} • {formatFileSize(item.size)}
+            <CustomText
+              numberOfLines={1}
+              fontFamily="Okra-Medium"
+              fontSize={11}
+              color={Colors.text_secondary}
+              style={{marginTop: 3}}>
+              {item.mimeType?.toUpperCase()} • {formatFileSize(item.size)} {item.dateFormatted ? `• ${item.dateFormatted}` : ''}
             </CustomText>
           </View>
         </View>
@@ -133,13 +180,25 @@ const ReceivedFileScreen: FC = () => {
                 .catch(err => console.error('Error opening file:', err));
             }
           }}
-          style={connectionStyles.openButton}
+          style={{
+            backgroundColor: Colors.primary,
+            borderRadius: 18,
+            paddingVertical: 7,
+            paddingHorizontal: 16,
+            justifyContent: 'center',
+            alignItems: 'center',
+            shadowColor: Colors.primary,
+            shadowOffset: {width: 0, height: 2},
+            shadowOpacity: 0.3,
+            shadowRadius: 5,
+            elevation: 3,
+          }}
           activeOpacity={0.8}>
           <CustomText
             numberOfLines={1}
             color="#fff"
             fontFamily="Okra-Bold"
-            fontSize={10}>
+            fontSize={11}>
             Open
           </CustomText>
         </TouchableOpacity>
@@ -149,7 +208,7 @@ const ReceivedFileScreen: FC = () => {
 
   return (
     <LinearGradient
-      colors={['#FFFFFF', '#F0F7FF', '#BAE6FD', '#38BDF8']}
+      colors={['#FFFFFF', '#FAF5FF', '#F3E8FF', '#EDE9FE']}
       style={sendStyles.container}
       start={{x: 0, y: 1}}
       end={{x: 0, y: 0}}>
@@ -162,24 +221,31 @@ const ReceivedFileScreen: FC = () => {
 
       <View style={[sendStyles.mainContainer, {paddingTop: statusBarHeight + 6}]}>
         {/* Top Header Row with Back Button */}
-        <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 16}}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 16,
+            marginBottom: 16,
+          }}>
           <TouchableOpacity
             onPress={goBack}
             activeOpacity={0.7}
             style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              backgroundColor: 'rgba(255,255,255,0.9)',
+              width: 42,
+              height: 42,
+              borderRadius: 21,
+              backgroundColor: '#FFFFFF',
               justifyContent: 'center',
               alignItems: 'center',
               borderWidth: 1,
-              borderColor: Colors.border,
-              shadowColor: '#000',
-              shadowOffset: {width: 0, height: 2},
-              shadowOpacity: 0.08,
-              shadowRadius: 4,
-              elevation: 3,
+              borderColor: 'rgba(124, 58, 237, 0.15)',
+              shadowColor: Colors.primary,
+              shadowOffset: {width: 0, height: 3},
+              shadowOpacity: 0.2,
+              shadowRadius: 6,
+              elevation: 4,
             }}>
             <Icon
               name="arrow-back"
@@ -193,7 +259,7 @@ const ReceivedFileScreen: FC = () => {
             Received Files
           </CustomText>
 
-          <View style={{width: 40}} />
+          <View style={{width: 42}} />
         </View>
 
         {isLoading ? (
@@ -206,18 +272,41 @@ const ReceivedFileScreen: FC = () => {
                 data={receivedFiles}
                 keyExtractor={item => item.id}
                 renderItem={renderItem}
-                contentContainerStyle={[connectionStyles.fileList, {paddingHorizontal: 16}]}
+                contentContainerStyle={{paddingHorizontal: 16, paddingBottom: 24}}
               />
             ) : (
-              <View style={connectionStyles.noDataContainer}>
-                <Icon name="folder-open-outline" iconFamily="Ionicons" size={48} color={Colors.text_light} />
+              <View style={[connectionStyles.noDataContainer, {alignItems: 'center', justifyContent: 'center'}]}>
+                <View
+                  style={{
+                    width: 72,
+                    height: 72,
+                    borderRadius: 36,
+                    backgroundColor: 'rgba(124, 58, 237, 0.08)',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    marginBottom: 14,
+                    borderWidth: 1,
+                    borderColor: 'rgba(124, 58, 237, 0.15)',
+                    shadowColor: Colors.primary,
+                    shadowOffset: {width: 0, height: 4},
+                    shadowOpacity: 0.15,
+                    shadowRadius: 8,
+                    elevation: 3,
+                  }}>
+                  <Icon name="folder-open-outline" iconFamily="Ionicons" size={36} color={Colors.primary} />
+                </View>
                 <CustomText
-                  numberOfLines={1}
+                  fontFamily="Okra-Bold"
+                  fontSize={16}
+                  color={Colors.text}>
+                  No files received yet
+                </CustomText>
+                <CustomText
                   fontFamily="Okra-Medium"
-                  fontSize={13}
+                  fontSize={12}
                   color={Colors.text_secondary}
-                  style={{marginTop: 10}}>
-                  No files received yet.
+                  style={{marginTop: 6, textAlign: 'center', paddingHorizontal: 32}}>
+                  Files shared with you from other devices will appear here automatically.
                 </CustomText>
               </View>
             )}
