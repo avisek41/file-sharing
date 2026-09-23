@@ -37,26 +37,12 @@ ShareApp lets two phones beam photos, videos, and large files **directly to each
 
 ## 🔄 How It Works — 4 Simple Stages
 
-```
-   📱 RECEIVER                                    📱 SENDER
-        │                                              │
-   1️⃣  Taps "Receive"                            1️⃣  Taps "Send"
-      • Starts local server                          • Scans for nearby devices
-      • Shows QR code                                • Or scans receiver's QR
-        │                                              │
-        │◄═══════ 2️⃣  SECURE TLS HANDSHAKE ═══════════►│
-        │                                              │
-        │◄────── 3️⃣  "Sending movie.mp4, 50MB,         │
-        │           split into 8KB pieces" ────────────│
-        │                                              │
-        │──────── "Send piece #1" ────────────────────►│
-        │◄─────────────────────────────── [piece #1] ──│
-        │──────── "Send piece #2" ────────────────────►│
-        │◄─────────────────────────────── [piece #2] ──│
-        │            ... repeats to 100% ...            │
-        │                                              │
-   4️⃣  File saved to Gallery ✅                  4️⃣  Transfer complete! ✅
-```
+|          Stage          | Receiver                                                                             | Sender                                                                          |
+| :---------------------: | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+|    1️⃣ **Discovery**     | Taps _Receive_ → starts local server → shows QR code                                 | Taps _Send_ → scans for nearby devices, or scans receiver's QR                  |
+| 2️⃣ **Secure handshake** | ⬌ Certificates verified over TLS — both screens switch to the live Connection view ⬌ |                                                                                 |
+| 3️⃣ **Chunked transfer** | Requests piece 1 → gets it → requests piece 2 → ... _(repeats until 100%)_           | Sends metadata first ("movie.mp4, 50MB, 8KB pieces"), then each requested piece |
+|       4️⃣ **Done**       | File saved to Gallery ✅                                                             | Transfer complete ✅                                                            |
 
 ### 1️⃣ Discovery — "I'm here!"
 
