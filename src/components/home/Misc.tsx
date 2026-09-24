@@ -1,4 +1,4 @@
-import {View, StyleSheet, Image, Platform} from 'react-native';
+import {View, StyleSheet, Image} from 'react-native';
 import React from 'react';
 import CustomText from '../global/CustomText';
 import {commonStyles} from '../../styles/commonStyles';

@@ -1,9 +1,9 @@
 import {View, StyleSheet, TouchableOpacity, Image} from 'react-native';
 import React, {FC} from 'react';
-import {Colors, screenHeight, screenWidth} from '../../utils/Constants';
+import {Colors, screenHeight} from '../../utils/Constants';
 import {navigate} from '../../utils/NavigationUtil';
 import CustomText from '../global/CustomText';
-import Icon from '../global/Icon';
+
 
 const SendReceiveButton: FC = () => {
   return (

@@ -1,4 +1,4 @@
-import {View, Text, TouchableOpacity} from 'react-native';
+import {View, TouchableOpacity} from 'react-native';
 import React, {useState} from 'react';
 import {bottomTabStyles} from '../../styles/bottomTabStyle';
 import {navigate} from '../../utils/NavigationUtil';

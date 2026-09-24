@@ -1,4 +1,4 @@
-import {View, Text, Modal, ActivityIndicator, Image} from 'react-native';
+import {View, Modal, ActivityIndicator, Image} from 'react-native';
 import React, {FC, useEffect, useMemo, useState} from 'react';
 import {modalStyles} from '../../styles/modalStyles';
 import Animated, {
