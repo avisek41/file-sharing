@@ -4,6 +4,7 @@ import React, {
   FC,
   useCallback,
   useContext,
+  useRef,
   useState,
 } from 'react';
 import {useChunkStore} from '../db/chunkStore';
@@ -14,8 +15,15 @@ import RNFS from 'react-native-fs';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import {v4 as uuidv4} from 'uuid';
 import {produce} from 'immer';
-import {Buffer} from 'buffer';
-import {receiveChunkAck, receiveFileAck, sendChunkAck} from './TCPUtils';
+import {
+  receiveChunkAck,
+  receiveFileAck,
+  sendChunkAck,
+  CHUNK_SIZE,
+  MAX_FILE_SIZE_MB,
+  MAX_FILES_PER_BATCH,
+  normalizeUri,
+} from './TCPUtils';
 
 interface TCPContextType {
   server: any;
@@ -26,6 +34,7 @@ interface TCPContextType {
   receivedFiles: any;
   totalSentBytes: number;
   totalReceivedBytes: number;
+  fileQueue: any[];
   startServer: (port: number) => void;
   connectToServer: (host: string, port: number, deviceName: string) => void;
   sendMessage: (message: string | Buffer) => void;
@@ -58,7 +67,7 @@ export const TCPProvider: FC<{children: React.ReactNode}> = ({children}) => {
   const [totalSentBytes, setTotalSentBytes] = useState<number>(0);
   const [totalReceivedBytes, setTotalReceivedBytes] = useState<number>(0);
 
-  const {currentChunkSet, setCurrentChunkSet, setChunkStore} = useChunkStore();
+  const {currentChunkSet, setCurrentChunkSet, setChunkStore, enqueueFile, dequeueFile, clearQueue, fileQueue} = useChunkStore();
 
   // DISCONNECT
 
@@ -74,6 +83,7 @@ export const TCPProvider: FC<{children: React.ReactNode}> = ({children}) => {
     setCurrentChunkSet(null);
     setTotalReceivedBytes(0);
     setChunkStore(null);
+    clearQueue();
     setIsConnected(false);
   }, [client, server]);
 
@@ -106,12 +116,13 @@ export const TCPProvider: FC<{children: React.ReactNode}> = ({children}) => {
             receiveFileAck(parsedData?.file, socket, setReceivedFiles);
           }
 
-          if (parsedData.event === 'send_chunk_ack') {
+        if (parsedData.event === 'send_chunk_ack') {
             sendChunkAck(
               parsedData?.chunkNo,
               socket,
               setTotalSentBytes,
               setSentFiles,
+              () => processNextInQueueRef.current(),
             );
           }
 
@@ -121,7 +132,7 @@ export const TCPProvider: FC<{children: React.ReactNode}> = ({children}) => {
               parsedData?.chunkNo,
               socket,
               setTotalReceivedBytes,
-              generateFile,
+              finalizeReceivedFile,
             );
           }
         });
@@ -190,6 +201,7 @@ export const TCPProvider: FC<{children: React.ReactNode}> = ({children}) => {
             newClient,
             setTotalSentBytes,
             setSentFiles,
+            () => processNextInQueueRef.current(),
           );
         }
 
@@ -199,7 +211,7 @@ export const TCPProvider: FC<{children: React.ReactNode}> = ({children}) => {
             parsedData?.chunkNo,
             newClient,
             setTotalReceivedBytes,
-            generateFile,
+            finalizeReceivedFile,
           );
         }
       });
@@ -224,49 +236,22 @@ export const TCPProvider: FC<{children: React.ReactNode}> = ({children}) => {
     [],
   );
 
-  // GENERATE FILE
-
-  const generateFile = async () => {
-    const {chunkStore, resetChunkStore} = useChunkStore.getState();
-    if (!chunkStore) {
-      console.log('No Chunks or files to process');
-      return;
-    }
-
-    if (chunkStore?.totalChunks !== chunkStore.chunkArray.length) {
-      console.error('Not all chunks have been received.');
-      return;
-    }
-
+  // GENERATE FILE → replaced with finalizeReceivedFile
+  // File is already fully written to disk by receiveChunkAck (streamed chunk-by-chunk).
+  // This function only handles post-write tasks: updating state + Android MediaStore indexing.
+  const finalizeReceivedFile = async (
+    filePath: string,
+    id: string,
+    mimeType: string,
+    name: string,
+  ) => {
     try {
-      const combinedChunks = Buffer.concat(chunkStore.chunkArray);
-      const baseDir =
-        Platform.OS === 'ios'
-          ? RNFS.DocumentDirectoryPath
-          : RNFS.DownloadDirectoryPath;
-      const appDir = `${baseDir}/ShareApp`;
-
-      const dirExists = await RNFS.exists(appDir);
-      if (!dirExists) {
-        await RNFS.mkdir(appDir);
-      }
-
-      const filePath = `${appDir}/${chunkStore.name}`;
-
-      await RNFS.writeFile(
-        filePath,
-        combinedChunks?.toString('base64'),
-        'base64',
-      );
-
       setReceivedFiles((prevFiles: any) =>
         produce(prevFiles, (draftFiles: any) => {
-          const fileIndex = draftFiles?.findIndex(
-            (f: any) => f.id === chunkStore.id,
-          );
-          if (fileIndex !== -1) {
-            draftFiles[fileIndex] = {
-              ...draftFiles[fileIndex],
+          const idx = draftFiles?.findIndex((f: any) => f.id === id);
+          if (idx !== -1) {
+            draftFiles[idx] = {
+              ...draftFiles[idx],
               uri: filePath,
               available: true,
             };
@@ -274,108 +259,150 @@ export const TCPProvider: FC<{children: React.ReactNode}> = ({children}) => {
         }),
       );
 
-      console.log('FILE SAVED SUCCESSFULLY✅ ', filePath);
+      console.log('FILE SAVED SUCCESSFULLY ✅', filePath);
 
-      // On Android, index file into MediaStore so it appears immediately in file managers & downloads
+      // Android only: index into MediaStore so file appears in Downloads / Gallery immediately
       if (Platform.OS === 'android') {
         try {
           await RNFS.scanFile(filePath);
-          console.log('Android MediaScanner scanned file successfully');
+          console.log('Android MediaScanner: scanned successfully');
         } catch (scanErr) {
-          console.log('scanFile error:', scanErr);
+          console.log('scanFile note:', scanErr);
         }
 
         try {
           await ReactNativeBlobUtil.MediaCollection.copyToMediaStore(
             {
-              name: chunkStore.name,
+              name,
               parentFolder: 'ShareApp',
-              mimeType: chunkStore.mimeType || '*/*',
+              mimeType: mimeType || '*/*',
             },
             'Download',
             filePath,
           );
-          console.log('Android MediaStore copyToMediaStore successful');
+          console.log('Android MediaStore: indexed successfully');
         } catch (mediaErr) {
           console.log('copyToMediaStore note:', mediaErr);
         }
       }
-
-      resetChunkStore();
     } catch (error) {
-      console.error('Error combining chunks or saving file:', error);
+      console.error('Error finalizing received file:', error);
     }
   };
 
-  //SEND MESSAGE
+  // ─── SEND MESSAGE ───────────────────────────────────────────────────────────
   const sendMessage = useCallback(
     (message: string | Buffer) => {
       if (client) {
         client.write(JSON.stringify(message));
         console.log('Sent from client:', message);
-      } else if (server) {
+      } else if (serverSocket) {
         serverSocket.write(JSON.stringify(message));
         console.log('Sent from server:', message);
       } else {
         console.error('No Client or Server Socket available');
       }
     },
-    [client, server],
+    [client, serverSocket],
   );
 
-  // SEND FILE ACK
+  // ─── PROCESS NEXT FILE IN QUEUE ────────────────────────────────────────────
+  // Ref so socket data-handlers always call the latest version (no stale closure)
+  const processNextInQueueRef = useRef<() => Promise<void>>(() => Promise.resolve());
 
-  const sendFileAck = async (file: any, type: 'image' | 'file') => {
-    if (currentChunkSet != null) {
-      Alert.alert('Wait for current file to be sent!');
+  const processNextInQueue = useCallback(async () => {
+    const next = dequeueFile();
+    if (!next) {
+      console.log('Queue empty — all files sent ✅');
       return;
     }
 
-    const normalizedPath =
-      Platform.OS === 'ios' ? file?.uri?.replace('file://', '') : file?.uri;
-    const fileData = await RNFS.readFile(normalizedPath, 'base64');
-    const buffer = Buffer.from(fileData, 'base64');
-    const CHUNK_SIZE = 1024 * 8;
-
-    let totalChunks = 0;
-    let offset = 0;
-    let chunkArray = [];
-
-    while (offset < buffer.length) {
-      const chunk = buffer.slice(offset, offset + CHUNK_SIZE);
-      totalChunks += 1;
-      chunkArray.push(chunk);
-      offset += chunk.length;
-    }
-
-    const rawData = {
-      id: uuidv4(),
-      name: type === 'file' ? file?.name : file?.fileName,
-      size: type === 'file' ? file?.size : file?.fileSize,
-      mimeType: type === 'file' ? 'file' : '.jpg',
-      totalChunks,
-    };
+    const normalizedPath = normalizeUri(next.uri);
 
     setCurrentChunkSet({
-      id: rawData?.id,
-      chunkArray,
-      totalChunks,
+      id: next.id,
+      uri: normalizedPath,
+      totalChunks: next.totalChunks,
     });
-
-    setSentFiles((prevData: any) =>
-      produce(prevData, (draft: any) => {
-        draft.push({
-          ...rawData,
-          uri: file?.uri,
-        });
-      }),
-    );
 
     const socket = client || serverSocket;
     if (!socket) return;
 
     try {
-      console.log('FILE ACKNOWLEDGE DONE✅');
+      console.log('Starting queued file 📤', next.name);
+      socket.write(JSON.stringify({event: 'file_ack', file: next}));
+    } catch (error) {
+      console.error('Error starting next queued file:', error);
+    }
+  }, [client, serverSocket, dequeueFile, setCurrentChunkSet]);
+
+  // Keep ref in sync so the socket handlers always call latest version
+  processNextInQueueRef.current = processNextInQueue;
+
+
+  // ─── SEND FILE ACK ─────────────────────────────────────────────────────────
+  const sendFileAck = async (file: any, type: 'image' | 'file') => {
+    // ── Size restriction ──
+    const fileSize = type === 'file' ? file?.size : file?.fileSize;
+    const MAX_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+    if (fileSize > MAX_BYTES) {
+      Alert.alert(
+        'File Too Large',
+        `Maximum allowed size is ${MAX_FILE_SIZE_MB} MB. This file is ${(fileSize / 1024 / 1024).toFixed(1)} MB.`,
+      );
+      return;
+    }
+
+    // ── Count restriction (queue + currently sending) ──
+    if (fileQueue.length >= MAX_FILES_PER_BATCH) {
+      Alert.alert(
+        'Queue Full',
+        `You can send at most ${MAX_FILES_PER_BATCH} files at a time.`,
+      );
+      return;
+    }
+
+    const normalizedPath = normalizeUri(file?.uri ?? '');
+
+    // Calculate total chunks WITHOUT reading the whole file into memory
+    const totalChunks = Math.ceil(fileSize / CHUNK_SIZE);
+
+    const rawData = {
+      id: uuidv4(),
+      name: type === 'file' ? file?.name : file?.fileName,
+      size: fileSize,
+      mimeType: type === 'file' ? 'file' : '.jpg',
+      totalChunks,
+      uri: normalizedPath,
+    };
+
+    setSentFiles((prevData: any) =>
+      produce(prevData, (draft: any) => {
+        draft.push({...rawData, uri: file?.uri});
+      }),
+    );
+
+    const isBusy = currentChunkSet != null;
+
+    if (isBusy) {
+      // Sender is already transferring — add to queue
+      enqueueFile(rawData);
+      console.log('Queued file:', rawData.name, '| Queue length:', fileQueue.length + 1);
+      return;
+    }
+
+    // ✅ Not busy — start sending immediately
+    setCurrentChunkSet({
+      id: rawData.id,
+      uri: normalizedPath,
+      totalChunks,
+    });
+
+    const socket = client || serverSocket;
+    if (!socket) return;
+
+    try {
+      console.log('FILE ACKNOWLEDGE DONE ✅');
       socket.write(JSON.stringify({event: 'file_ack', file: rawData}));
     } catch (error) {
       console.log('Error Sending File:', error);
@@ -393,6 +420,7 @@ export const TCPProvider: FC<{children: React.ReactNode}> = ({children}) => {
         totalReceivedBytes,
         totalSentBytes,
         isConnected,
+        fileQueue,
         startServer,
         connectToServer,
         disconnect,
