@@ -7,6 +7,7 @@ interface ChunkState {
     name: string;
     totalChunks: number;
     chunkArray: Buffer[];
+    mimeType?: string;
   } | null;
   currentChunkSet: {
     id: string | null;

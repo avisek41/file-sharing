@@ -4,6 +4,7 @@ import {
   TouchableOpacity,
   FlatList,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import React, {FC, useEffect, useState} from 'react';
 import {useTCP} from '../service/TCPProvider';
@@ -15,7 +16,7 @@ import {connectionStyles} from '../styles/connectionStyles';
 import CustomText from '../components/global/CustomText';
 import Options from '../components/home/Options';
 import {formatFileSize} from '../utils/libraryHelpers';
-import {Colors} from '../utils/Constants';
+import {Colors, BrandGradients} from '../utils/Constants';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import {Platform} from 'react-native';
 
@@ -37,28 +38,40 @@ const ConnectionScreen: FC = () => {
     switch (mimeType) {
       case '.mp3':
         return (
-          <Icon
-            name="musical-notes"
-            size={16}
-            color="blue"
-            iconFamily="Ionicons"
-          />
+          <View style={connectionStyles.fileIconWrapper}>
+            <Icon
+              name="musical-notes"
+              size={18}
+              color={Colors.primary}
+              iconFamily="Ionicons"
+            />
+          </View>
         );
       case '.mp4':
         return (
-          <Icon name="videocam" size={16} color="green" iconFamily="Ionicons" />
+          <View style={connectionStyles.fileIconWrapper}>
+            <Icon name="videocam" size={18} color="#10B981" iconFamily="Ionicons" />
+          </View>
         );
       case '.jpg':
+      case '.png':
+      case '.jpeg':
         return (
-          <Icon name="image" size={16} color="orange" iconFamily="Ionicons" />
+          <View style={connectionStyles.fileIconWrapper}>
+            <Icon name="image" size={18} color="#F59E0B" iconFamily="Ionicons" />
+          </View>
         );
       case '.pdf':
         return (
-          <Icon name="document" size={16} color="red" iconFamily="Ionicons" />
+          <View style={connectionStyles.fileIconWrapper}>
+            <Icon name="document-text" size={18} color="#EF4444" iconFamily="Ionicons" />
+          </View>
         );
       default:
         return (
-          <Icon name="folder" size={16} color="gray" iconFamily="Ionicons" />
+          <View style={connectionStyles.fileIconWrapper}>
+            <Icon name="folder" size={18} color={Colors.primary} iconFamily="Ionicons" />
+          </View>
         );
     }
   };
@@ -79,6 +92,24 @@ const ConnectionScreen: FC = () => {
     }
   }, [isConnected]);
 
+  const handleDisconnect = () => {
+    Alert.alert(
+      'Disconnect Device',
+      `Are you sure you want to disconnect from ${connectedDevice || 'this device'}?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Disconnect',
+          style: 'destructive',
+          onPress: () => disconnect(),
+        },
+      ],
+    );
+  };
+
   const handleTabChange = (tab: 'SENT' | 'RECEIVED') => {
     setActiveTab(tab);
   };
@@ -89,10 +120,10 @@ const ConnectionScreen: FC = () => {
         <View style={connectionStyles.fileInfoContainer}>
           {renderThumbnail(item?.mimeType)}
           <View style={connectionStyles?.fileDetails}>
-            <CustomText numberOfLines={1} fontFamily="Okra-Bold" fontSize={10}>
+            <CustomText numberOfLines={1} fontFamily="Okra-Bold" fontSize={11} color={Colors.text}>
               {item?.name}
             </CustomText>
-            <CustomText>
+            <CustomText fontFamily="Okra-Medium" fontSize={10} color={Colors.text_secondary} style={{marginTop: 2}}>
               {item?.mimeType} • {formatFileSize(item.size)}
             </CustomText>
           </View>
@@ -101,6 +132,7 @@ const ConnectionScreen: FC = () => {
         {item?.available ? (
           <TouchableOpacity
             style={connectionStyles.openButton}
+            activeOpacity={0.8}
             onPress={() => {
               const normalizedPath =
                 Platform.OS === 'ios' ? `file://${item?.uri}` : item?.uri;
@@ -121,7 +153,7 @@ const ConnectionScreen: FC = () => {
               numberOfLines={1}
               color="#fff"
               fontFamily="Okra-Bold"
-              fontSize={9}>
+              fontSize={10}>
               Open
             </CustomText>
           </TouchableOpacity>
@@ -134,7 +166,7 @@ const ConnectionScreen: FC = () => {
 
   return (
     <LinearGradient
-      colors={['#FFFFFF', '#CDDAEE', '#8DBAFF']}
+      colors={BrandGradients.connection}
       style={sendStyles.container}
       start={{x: 0, y: 1}}
       end={{x: 0, y: 0}}>
@@ -142,32 +174,35 @@ const ConnectionScreen: FC = () => {
       <View style={sendStyles.mainContainer}>
         <View style={connectionStyles.container}>
           <View style={connectionStyles.connectionContainer}>
-            <View style={{width: '55%'}}>
-              <CustomText numberOfLines={1} fontFamily="Okra-Medium">
+            <View style={{width: '60%'}}>
+              <CustomText numberOfLines={1} fontFamily="Okra-Medium" fontSize={11} color={Colors.text_secondary}>
                 Connected with
               </CustomText>
 
               <CustomText
                 numberOfLines={1}
                 fontFamily="Okra-Bold"
-                fontSize={14}>
+                fontSize={15}
+                color={Colors.text}>
                 {connectedDevice || 'Unknown'}
               </CustomText>
             </View>
 
             <TouchableOpacity
-              onPress={() => disconnect()}
+              onPress={handleDisconnect}
+              activeOpacity={0.7}
               style={connectionStyles.disconnectButton}>
               <Icon
-                name="remove-circle"
-                size={12}
-                color="red"
+                name="close-circle"
+                size={14}
+                color="#EF4444"
                 iconFamily="Ionicons"
               />
               <CustomText
                 numberOfLines={1}
                 fontFamily="Okra-Bold"
-                fontSize={10}>
+                fontSize={11}
+                color="#EF4444">
                 Disconnect
               </CustomText>
             </TouchableOpacity>
@@ -191,15 +226,15 @@ const ConnectionScreen: FC = () => {
                   ]}>
                   <Icon
                     name="cloud-upload"
-                    size={12}
-                    color={activeTab === 'SENT' ? '#fff' : 'blue'}
+                    size={13}
+                    color={activeTab === 'SENT' ? '#fff' : Colors.primary}
                     iconFamily="Ionicons"
                   />
                   <CustomText
                     numberOfLines={1}
                     fontFamily="Okra-Bold"
-                    fontSize={9}
-                    color={activeTab === 'SENT' ? '#fff' : '#000'}>
+                    fontSize={10}
+                    color={activeTab === 'SENT' ? '#fff' : Colors.text}>
                     SENT
                   </CustomText>
                 </TouchableOpacity>
@@ -213,16 +248,16 @@ const ConnectionScreen: FC = () => {
                       : connectionStyles.inactiveButton,
                   ]}>
                   <Icon
-                    name="cloud-upload"
-                    size={12}
-                    color={activeTab === 'RECEIVED' ? '#fff' : 'blue'}
+                    name="cloud-download"
+                    size={13}
+                    color={activeTab === 'RECEIVED' ? '#fff' : Colors.primary}
                     iconFamily="Ionicons"
                   />
                   <CustomText
                     numberOfLines={1}
                     fontFamily="Okra-Bold"
-                    fontSize={9}
-                    color={activeTab === 'RECEIVED' ? '#fff' : '#000'}>
+                    fontSize={10}
+                    color={activeTab === 'RECEIVED' ? '#fff' : Colors.text}>
                     RECEIVED
                   </CustomText>
                 </TouchableOpacity>

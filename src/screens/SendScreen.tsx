@@ -9,7 +9,7 @@ import Icon from '../components/global/Icon';
 import CustomText from '../components/global/CustomText';
 import BreakerText from '../components/ui/BreakerText';
 import {TouchableOpacity} from 'react-native';
-import {Colors, screenWidth} from '../utils/Constants';
+import {Colors, BrandGradients, screenWidth} from '../utils/Constants';
 import LottieView from 'lottie-react-native';
 import {goBack, navigate} from '../utils/NavigationUtil';
 import dgram from 'react-native-udp';
@@ -169,7 +169,7 @@ const SendScreen: FC = () => {
 
   return (
     <LinearGradient
-      colors={['#FFFFFF', '#B689ED', '#A066E5']}
+      colors={BrandGradients.send}
       style={sendStyles.container}
       start={{x: 0, y: 1}}
       end={{x: 0, y: 0}}>
@@ -260,8 +260,8 @@ const SendScreen: FC = () => {
           <Icon
             name="arrow-back"
             iconFamily="Ionicons"
-            size={16}
-            color="#000"
+            size={20}
+            color={Colors.text}
           />
         </TouchableOpacity>
       </View>

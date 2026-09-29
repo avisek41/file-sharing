@@ -132,8 +132,7 @@ export const receiveChunkAck = async (
 
   if (chunkNo + 1 === chunkStore?.totalChunks) {
     console.log('All Chunks Received ✅ 🔴');
-    generateFile();
-    resetChunkStore();
+    await generateFile();
     return;
   }
 

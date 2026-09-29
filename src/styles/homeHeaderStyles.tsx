@@ -1,29 +1,82 @@
-import { StyleSheet } from "react-native";
-import { Colors, screenHeight, screenWidth } from "../utils/Constants";
+import { StyleSheet, Platform, StatusBar } from "react-native";
+
+
+const statusBarHeight = Platform.OS === 'android' ? (StatusBar.currentHeight || 28) : 0;
 
 export const homeHeaderStyles = StyleSheet.create({
     mainContainer: {
-        backgroundColor: Colors.primary,
+        borderBottomLeftRadius: 28,
+        borderBottomRightRadius: 28,
+        shadowColor: '#4C1D95',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.22,
+        shadowRadius: 16,
+        elevation: 8,
     },
     container: {
-        padding: 10,
-        zIndex: 4,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingTop: Platform.OS === 'android' ? statusBarHeight + 6 : 8,
+        paddingBottom: 16,
     },
-    curve: {
-        position: 'absolute',
-        bottom: -screenHeight * 0.09,
-        zIndex: 3,
-        width: '100%',
+    headerButton: {
+        width: 42,
+        height: 42,
+        borderRadius: 21,
+        backgroundColor: 'rgba(255, 255, 255, 0.16)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.22)',
     },
-    logo: {
-        width: screenWidth * 0.4,
-        height: screenHeight * 0.048,
-        resizeMode: 'contain',
+    brandContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        backgroundColor: 'rgba(255, 255, 255, 0.12)',
+        paddingVertical: 6,
+        paddingHorizontal: 14,
+        borderRadius: 22,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+    },
+    logoBadge: {
+        width: 26,
+        height: 26,
+        borderRadius: 13,
+        backgroundColor: 'rgba(245, 158, 11, 0.22)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(245, 158, 11, 0.45)',
+    },
+    profileButton: {
+        width: 42,
+        height: 42,
+        borderRadius: 21,
+        borderWidth: 2,
+        borderColor: 'rgba(255, 255, 255, 0.85)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
     },
     profile: {
-        width: 45,
-        height: 45,
-        borderRadius: 140,
+        width: 38,
+        height: 38,
+        borderRadius: 19,
         resizeMode: 'cover',
+    },
+    onlineDot: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        backgroundColor: '#10B981',
+        borderWidth: 2,
+        borderColor: '#FFFFFF',
     },
 });
